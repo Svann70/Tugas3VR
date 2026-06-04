@@ -922,13 +922,7 @@ PlayerSettings:
   XboxOneOverrideIdentityName: 
   XboxOneOverrideIdentityPublisher: 
   vrEditorSettings: {}
-  cloudServicesEnabled:
-    Build: 0
-    Game Performance: 0
-    Legacy Analytics: 0
-    Purchasing: 0
-    UDP: 0
-    Unity Ads: 0
+  cloudServicesEnabled: {}
   luminIcon:
     m_Name: 
     m_ModelFolderPath: 
@@ -951,11 +945,11 @@ PlayerSettings:
   activeInputHandler: 2
   windowsGamepadBackendHint: 0
   enableDirectStorage: 0
-  cloudProjectId: 8740f1e3-e756-4c11-ac39-e8f1af9db964
+  cloudProjectId: c38cf99e-f7c1-42f8-b2e5-eee3f0931e0c
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
   projectName: Tugas3 Game Dev
-  organizationId: rifzkynurman11
+  organizationId: ivanderdaniel79
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}
