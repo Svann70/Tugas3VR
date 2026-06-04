@@ -1,23 +1,23 @@
 using UnityEngine;
 
-// Checkpoint
-// Pasang di objek trigger di sisi TERJAUH dari Start/Finish.
-// Gunanya: supaya pemain tidak bisa curang langsung menyentuh Finish.
-// Finish baru sah kalau Checkpoint ini sudah dilewati dulu.
-//
-// Cara pakai:
-// 1. Objek ini WAJIB punya Collider dengan "Is Trigger" dicentang.
-// 2. Pemain (SCOOTER) harus ber-Tag "Player".
-
 public class Checkpoint : MonoBehaviour
 {
-    // "static" artinya nilai ini bisa dibaca dari script lain (FinishLine).
     public static bool passed = false;
+
+    [Header("UI Settings")]
+    public GameObject checkpointUI; 
+    
+    [Tooltip("Berapa detik pop-up muncul sebelum hilang lagi")]
+    public float durasiTeksMuncul = 3f; // Diatur 3 detik, bisa kamu ganti di Inspector
 
     private void Start()
     {
-        // Reset setiap kali scene dimulai, supaya tidak terbawa dari main sebelumnya.
         passed = false;
+
+        if (checkpointUI != null)
+        {
+            checkpointUI.SetActive(false);
+        }
     }
 
     private void OnTriggerEnter(Collider other)
@@ -25,7 +25,26 @@ public class Checkpoint : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             passed = true;
-            Debug.Log("Checkpoint dilewati! Sekarang menuju Finish.");
+            Debug.Log("Checkpoint dilewati!");
+
+            if (checkpointUI != null)
+            {
+                // 1. MUNCULKAN POP-UP
+                checkpointUI.SetActive(true);
+
+                // 2. SEMBUNYIKAN OTOMATIS setelah beberapa detik
+                // Fungsi ini akan memanggil fungsi "SembunyikanUI" sesuai waktu di variabel durasiTeksMuncul
+                Invoke("SembunyikanUI", durasiTeksMuncul);
+            }
+        }
+    }
+
+    // Ini fungsi pembantu yang dipanggil oleh Invoke di atas
+    void SembunyikanUI()
+    {
+        if (checkpointUI != null)
+        {
+            checkpointUI.SetActive(false);
         }
     }
 }

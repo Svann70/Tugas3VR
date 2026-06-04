@@ -1,33 +1,28 @@
 using UnityEngine;
-
-// FinishLine
-// Pasang di objek garis Finish (dekat Start).
-// Finish hanya sah kalau Checkpoint sudah dilewati = pemain benar-benar 1 putaran.
-//
-// Cara pakai:
-// 1. Objek ini WAJIB punya Collider dengan "Is Trigger" dicentang.
-// 2. Pemain (SCOOTER) harus ber-Tag "Player".
-// 3. (Opsional) Drag sebuah objek Teks UI ke slot "Win Text" di Inspector
-//    supaya muncul tulisan "FINISH!" saat menang.
-
-using UnityEngine.UI; // untuk Text UI (opsional)
+using UnityEngine.SceneManagement; // WAJIB untuk fitur pindah Scene
 
 public class FinishLine : MonoBehaviour
 {
-    [Header("UI Opsional")]
-    [Tooltip("Drag objek Text UI ke sini untuk menampilkan pesan menang. Boleh dikosongkan.")]
-    public Text winText;
+    [Header("UI Settings")]
+    [Tooltip("Tarik objek Canvas_Finish kamu ke sini lewat Inspector.")]
+    public GameObject finishCanvas; 
 
-    [Tooltip("Pesan yang muncul saat menang.")]
-    public string winMessage = "FINISH! Satu putaran selesai!";
+    [Header("Scene Settings")]
+    [Tooltip("Ketik NAMA SCENE MAIN MENU kamu di sini (harus persis hurufnya).")]
+    public string namaSceneMainMenu = "MainMenu"; 
+
+    [Tooltip("Berapa detik jeda sebelum game pindah ke Main Menu.")]
+    public float jedaPindahScene = 3f;
 
     private bool hasFinished = false;
 
     private void Start()
     {
-        // Sembunyikan teks menang di awal (kalau ada).
-        if (winText != null)
-            winText.gameObject.SetActive(false);
+        // Matikan Canvas Finish di awal game supaya tidak langsung muncul
+        if (finishCanvas != null)
+        {
+            finishCanvas.SetActive(false);
+        }
     }
 
     private void OnTriggerEnter(Collider other)
@@ -37,13 +32,28 @@ public class FinishLine : MonoBehaviour
         if (other.CompareTag("Player") && Checkpoint.passed && !hasFinished)
         {
             hasFinished = true;
-            Debug.Log("FINISH! Satu putaran selesai.");
+            Debug.Log("FINISH! Paket telah dikirimkan.");
 
-            if (winText != null)
+            // 1. MUNCULKAN POP-UP CANVAS FINISH
+            if (finishCanvas != null)
             {
-                winText.gameObject.SetActive(true);
-                winText.text = winMessage;
+                finishCanvas.SetActive(true);
             }
+
+            // 2. PINDAH KE SCENE MAIN MENU DENGAN JEDA
+            Invoke("PindahKeMainMenu", jedaPindahScene);
+        }
+    }
+
+    void PindahKeMainMenu()
+    {
+        if (!string.IsNullOrEmpty(namaSceneMainMenu))
+        {
+            SceneManager.LoadScene(namaSceneMainMenu);
+        }
+        else
+        {
+            Debug.LogError("Nama Scene Main Menu belum diisi di Inspector!");
         }
     }
 }

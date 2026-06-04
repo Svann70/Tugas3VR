@@ -6,6 +6,8 @@ public class KendaliScooter : MonoBehaviour
 {
     public float speed = 10f;
     public float turnSpeed = 100f;
+    public float groundCheckDistance = 0.25f;
+    public LayerMask groundLayers = ~0;
     private Rigidbody rb;
 
     void Start()
@@ -43,7 +45,7 @@ public class KendaliScooter : MonoBehaviour
         {
             float rot = turn * turnSpeed * Time.fixedDeltaTime;
             if (move < 0) rot = -rot;
-            transform.Rotate(0, rot, 0);
+            rb.MoveRotation(rb.rotation * Quaternion.Euler(0, rot, 0));
         }
     }
 }
