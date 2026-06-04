@@ -1,81 +1,77 @@
 using UnityEngine;
 
-// ScooterController
-// Kontrol skuter pakai keyboard (WASD) + rotasi mouse.
-// Memakai Character Controller (sudah menempel di objek SCOOTER) supaya tidak
-// menembus jalan/tembok, dan punya gravity supaya menempel ke tanah.
-//
-// PENTING: script ini pakai Input.GetAxis (input cara lama), jadi project HARUS
-// di-set: Edit > Project Settings > Player > Active Input Handling = "Both".
-// Kalau belum, akan muncul error "InvalidOperationException ... Input System".
-
 [RequireComponent(typeof(CharacterController))]
 public class ScooterController : MonoBehaviour
 {
     [Header("Kecepatan")]
-    [Tooltip("Kecepatan maju/mundur. Naikkan kalau terasa lambat (skala objek besar).")]
-    public float moveSpeed = 190f;
+    public float maxSpeed = 150f;        // kecepatan maksimum maju
+    public float maxReverseSpeed = 40f;  // kecepatan maksimum mundur
+    public float acceleration = 70f;     // seberapa cepat ngebut (gas)
+    public float braking = 140f;         // seberapa cepat berhenti (rem)
+    public float friction = 120f;         // melambat alami saat lepas gas
 
-    [Tooltip("Kecepatan belok kiri/kanan (derajat per detik).")]
-    public float turnSpeed = 90f;
-
-    [Header("Mouse")]
-    [Tooltip("Aktifkan rotasi pakai mouse (kriteria dosen: rotasi mouse).")]
-    public bool useMouseRotation = true;
-
-    [Tooltip("Sensitivitas mouse untuk memutar arah skuter.")]
+    [Header("Belok")]
+    public float turnSpeed = 90f;        // derajat/detik saat belok penuh
     public float mouseSensitivity = 2f;
-
-    [Tooltip("Kunci kursor di tengah layar saat main (tekan Esc untuk lepas).")]
     public bool lockCursor = true;
 
+    [Header("Lean / Kemiringan Body (opsional)")]
+    public Transform leanTarget;         // drag objek visual motor ke sini (boleh kosong)
+    public float maxLeanAngle = 18f;
+    public float leanSmooth = 6f;
+
     [Header("Fisika")]
-    [Tooltip("Kekuatan gravitasi supaya skuter menempel ke tanah.")]
     public float gravity = 20f;
 
-    private CharacterController controller;
-    private float yaw;                // arah hadap skuter (rotasi sumbu Y)
-    private float verticalVelocity;   // kecepatan jatuh (gravity)
+    private CharacterController cc;
+    private float currentSpeed = 0f;     // kecepatan saat ini (ini yang bikin momentum)
+    private float yaw = 0f;
+    private float verticalVelocity = 0f;
+    private float currentLean = 0f;
+    private Quaternion leanBaseRot;
 
     void Start()
     {
-        controller = GetComponent<CharacterController>();
-
-        // Mulai dari arah hadap skuter sekarang, supaya tidak "loncat" arah saat mulai main.
+        cc = GetComponent<CharacterController>();
         yaw = transform.eulerAngles.y;
-
-        if (lockCursor)
-            Cursor.lockState = CursorLockMode.Locked;
+        if (leanTarget != null) leanBaseRot = leanTarget.localRotation;
+        if (lockCursor) Cursor.lockState = CursorLockMode.Locked;
     }
 
     void Update()
     {
-        // --- 1. ROTASI (belok) ---
-        // Belok pakai A/D (keyboard)
-        float turnInput = Input.GetAxis("Horizontal"); // A = -1, D = +1
-        yaw += turnInput * turnSpeed * Time.deltaTime;
+        float throttle = Input.GetAxisRaw("Vertical");   // W / S
+        float steerInput = Input.GetAxis("Horizontal");  // A / D
+        float mouseX = Input.GetAxis("Mouse X");
 
-        // Belok pakai mouse (memenuhi kriteria "rotasi mouse")
-        if (useMouseRotation)
-            yaw += Input.GetAxis("Mouse X") * mouseSensitivity;
+        // 1) Momentum: kecepatan naik/turun bertahap, tidak instan
+        if (throttle > 0.1f)
+            currentSpeed = Mathf.MoveTowards(currentSpeed, -maxSpeed, acceleration * Time.deltaTime);
+        else if (throttle < -0.1f)
+            currentSpeed = Mathf.MoveTowards(currentSpeed, maxReverseSpeed, braking * Time.deltaTime);
+        else
+            currentSpeed = Mathf.MoveTowards(currentSpeed, 0f, friction * Time.deltaTime);
 
-        // Terapkan rotasi ke skuter. Karena Main Camera adalah anak SCOOTER,
-        // kamera otomatis ikut berputar.
+        // 2) Belok hanya terasa saat melaju (makin cepat makin responsif)
+        float speedFactor = Mathf.Clamp01(Mathf.Abs(currentSpeed) / maxSpeed);
+        float reverseSign = currentSpeed < -0.1f ? -1f : 1f; // mundur = setang terbalik
+        float steer = -steerInput + mouseX * mouseSensitivity; // gabung A/D + mouse
+        yaw += steer * turnSpeed * speedFactor * reverseSign * Time.deltaTime;
         transform.rotation = Quaternion.Euler(0f, yaw, 0f);
 
-        // --- 2. GERAK MAJU/MUNDUR ---
-        float moveInput = Input.GetAxis("Vertical"); // W = +1, S = -1
-        // Gerak relatif arah hadap skuter (natural untuk kendaraan).
-        Vector3 horizontalMove = -transform.forward * moveInput * moveSpeed;
+        // 3) Gerak maju + gravitasi
+        if (cc.isGrounded && verticalVelocity < 0f) verticalVelocity = -2f;
+        verticalVelocity -= gravity * Time.deltaTime;
+        Vector3 move = transform.forward * currentSpeed;
+        move.y = verticalVelocity;
+        cc.Move(move * Time.deltaTime);
 
-        // --- 3. GRAVITY ---
-        if (controller.isGrounded && verticalVelocity < 0f)
-            verticalVelocity = -2f; // dorong sedikit ke bawah biar tetap "grounded"
-        else
-            verticalVelocity -= gravity * Time.deltaTime;
-
-        // --- 4. JALANKAN GERAKAN ---
-        Vector3 velocity = horizontalMove + Vector3.up * verticalVelocity;
-        controller.Move(velocity * Time.deltaTime);
+        // 4) Lean body saat menikung (kalau leanTarget diisi)
+        if (leanTarget != null)
+        {
+            float targetLean = -steer * maxLeanAngle * speedFactor;
+            currentLean = Mathf.Lerp(currentLean, targetLean, leanSmooth * Time.deltaTime);
+            leanTarget.localRotation = leanBaseRot * Quaternion.Euler(0f, 0f, currentLean);
+        }
     }
 }

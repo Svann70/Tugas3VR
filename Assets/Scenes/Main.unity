@@ -47791,11 +47791,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 845f4130fd24d6949878f405996bb267, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ScooterController
-  moveSpeed: 190
+  maxSpeed: 300
+  maxReverseSpeed: 100
+  acceleration: 70
+  braking: 200
+  friction: 50
   turnSpeed: 90
-  useMouseRotation: 1
   mouseSensitivity: 2
   lockCursor: 1
+  leanTarget: {fileID: 0}
+  maxLeanAngle: 30
+  leanSmooth: 2
   gravity: 20
 --- !u!64 &1668028157
 MeshCollider:
