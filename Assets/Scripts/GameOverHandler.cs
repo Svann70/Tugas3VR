@@ -7,7 +7,7 @@ public class GameOverHandler : MonoBehaviour
     public GameObject gameOverCanvas; // Masukkan Canvas GameOver di sini
 
     [Tooltip("Berapa detik jeda setelah mati sebelum game restart otomatis")]
-    public float jedaRestart = 3f;
+    public float jedaRestart = 1f;
 
     private bool sudahMati = false;
 

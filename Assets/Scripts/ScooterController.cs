@@ -1,4 +1,5 @@
 using UnityEngine;
+using TMPro;
 
 [RequireComponent(typeof(CharacterController))]
 public class ScooterController : MonoBehaviour
@@ -22,6 +23,9 @@ public class ScooterController : MonoBehaviour
 
     [Header("Fisika")]
     public float gravity = 20f;
+
+    [Header("UI Speedometer")]
+    public TextMeshProUGUI textSpeed;
 
     // ── Ground detection manual (lebih reliable dari isGrounded bawaan CC) ──
     [Header("Ground Detection")]
@@ -117,6 +121,16 @@ public class ScooterController : MonoBehaviour
             float targetLean = -steer * maxLeanAngle * speedFactor;
             currentLean = Mathf.Lerp(currentLean, targetLean, leanSmooth * Time.deltaTime);
             leanTarget.localRotation = leanBaseRot * Quaternion.Euler(0f, 0f, currentLean);
+        }
+
+        // ── 6) Update Speedometer UI ─────────────────────────────────────────
+        if (textSpeed != null)
+        {
+            // Ambil angka absolut agar kecepatan maju/mundur tidak minus
+            float displaySpeed = Mathf.Abs(currentSpeed); 
+            
+            // Bulatkan angka dan gabungkan dengan teks " km/h"
+            textSpeed.text = Mathf.RoundToInt(displaySpeed).ToString() + " km/h";
         }
     }
 
